@@ -7,7 +7,7 @@
 using namespace std;
 
 // Static pointer to the class containing all the windows
-MyFrame *frame;         
+MyFrame *frame;
 
 // Constants for GL surface materials
 const GLfloat mat_diffuse[] = { 0.0, 0.0, 0.0, 1.0 };
@@ -19,7 +19,7 @@ const GLfloat mat_shininess[] = { 50.0 };
 // Constants for GL lights
 const GLfloat top_right[] = { 1.0, 1.0, 1.0, 0.0 };
 const GLfloat straight_on[] = { 0.0, 0.0, 1.0, 0.0 };
-const GLfloat no_ambient[] = { 0.0, 0.0, 0.0, 1.0 }; 
+const GLfloat no_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
 const GLfloat dim_diffuse[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat bright_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
 const GLfloat med_diffuse[] = { 0.75, 0.75, 0.75, 1.0 };
@@ -34,7 +34,7 @@ BEGIN_EVENT_TABLE(MyGLCanvas, wxGLCanvas)
   EVT_MOUSE_EVENTS(MyGLCanvas::OnMouse)
   EVT_KEY_DOWN(MyGLCanvas::OnKey)
 END_EVENT_TABLE()
-  
+
 int wxglcanvas_attrib_list[5] = {WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, 0};
 
 MyGLCanvas::MyGLCanvas(wxWindow *parent, wxWindowID id, canvas_t type, const wxPoint& pos, const wxSize& size, long style, const wxString& name, const wxPalette& palette):
@@ -94,7 +94,7 @@ void MyGLCanvas::ConfigureGL()
       glGenTextures(1, &(frame->any_texture)); frame->construct_any_reslice();
       frame->tri_list = glGenLists(1);
       for (i=0; i<16; i++) scene_rotate[i] = 0.0;
-      scene_rotate[0] = 1.0; scene_rotate[5] = -1.0; scene_rotate[10] = -1.0; scene_rotate[15] = 1.0; 
+      scene_rotate[0] = 1.0; scene_rotate[5] = -1.0; scene_rotate[10] = -1.0; scene_rotate[15] = 1.0;
       scene_pan[0] = 0.0; scene_pan[1] = 0.0; scene_scale = 2.5;
       heading = 0.0; offset_x = 0.0; offset_z = -INITIAL_DEPTH_OFFSET; velocity_x = 0.0; velocity_z = 0.0;
     }
@@ -106,7 +106,7 @@ void MyGLCanvas::ConfigureGL()
   } else { // the slice/reslice windows
 
     // Set up the projection matrix and the pixel drawing environment for the slice/reslice windows
-    glOrtho(0, w, 0, h, -1, 1); 
+    glOrtho(0, w, 0, h, -1, 1);
     glRasterPos2d(PART_PIXEL, h - PART_PIXEL);
     glPixelZoom(1.0, -1.0);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -149,7 +149,7 @@ void MyGLCanvas::OnMouse(wxMouseEvent& event)
     glMultMatrixf(scene_rotate);
     glGetFloatv(GL_MODELVIEW_MATRIX, scene_rotate);
     lastx = event.GetX();
-    lasty = event.GetY();	
+    lasty = event.GetY();
     Refresh();
   } else if (event.GetWheelRotation()!=0) { // the mouse wheel - enlarge or shrink the scene
     if (event.GetWheelRotation() < 0) scene_scale *= (1.0 - (float)event.GetWheelRotation()/(20*event.GetWheelDelta()));
@@ -161,7 +161,7 @@ void MyGLCanvas::OnMouse(wxMouseEvent& event)
 void MyGLCanvas::OnKey(wxKeyEvent &event)
 // Callback function for key presses inside the GL canvas
 {
-  
+
   // We always want to process wireframe key presses
   if ((event.GetKeyCode() == 'w') || (event.GetKeyCode() == 'W')) {
     wireframe = !wireframe;
@@ -172,11 +172,11 @@ void MyGLCanvas::OnKey(wxKeyEvent &event)
   if (!frame->fly) return;
 
   switch (event.GetKeyCode()) {
-  case WXK_UP: 
+  case WXK_UP:
     velocity_x += FLY_SPEED_STEP*sin(heading*M_PI/180.0)/frame->fps;
     velocity_z -= FLY_SPEED_STEP*cos(heading*M_PI/180.0)/frame->fps;
     break;
-  case WXK_DOWN: 
+  case WXK_DOWN:
     velocity_x -= FLY_SPEED_STEP*sin(heading*M_PI/180.0)/frame->fps;
     velocity_z += FLY_SPEED_STEP*cos(heading*M_PI/180.0)/frame->fps;
     break;
@@ -186,7 +186,7 @@ void MyGLCanvas::OnKey(wxKeyEvent &event)
   case WXK_RIGHT:
     heading += FLY_ANGLE_STEP;
     break;
-  case ' ': 
+  case ' ':
     velocity_x = 0.0;
     velocity_z = 0.0;
     break;
@@ -329,27 +329,38 @@ void MyGLCanvas::draw_view_window(void)
   // Initialise the modelling transformation
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  
 
   if (fly) {
-    
+
     // Update the view position
     offset_x -= velocity_x;
     offset_z -= velocity_z;
-    glRotatef(heading, 0, 1, 0);
-    glTranslatef(offset_x, 0.0, offset_z);
-    
-    
-  
+
+    // EXERCISE 3
+    // Adjust the modelview matrix to represent the current displacement between the viewpoint
+    // and the scene. The translational displacement is (offset_x, 0.0, offset_z), while
+    // the rotation around the y-axis is heading. Also, set up GL_LIGHT1 and GL_LIGHT2 correctly,
+    // according to the current value of the boolean variable mobile_lights.
+
     if(mobile_lights) {
-      glLightfv(GL_LIGHT1, GL_POSITION, top_right);
-      glLightfv(GL_LIGHT2, GL_POSITION, straight_on);
-    }
-    else{
       glLightfv(GL_LIGHT1, GL_POSITION, top_right);
       glLightfv(GL_LIGHT2, GL_POSITION, straight_on);
 
     }
+
+    // now rotate
+    glRotatef(heading,0.0,1.0,0.0);
+
+    // translate to correct position
+    glTranslatef(offset_x, 0.0, offset_z);
+
+    if(!mobile_lights) {
+      glLightfv(GL_LIGHT1, GL_POSITION, top_right);
+      glLightfv(GL_LIGHT2, GL_POSITION, straight_on);
+
+    }
+
+
   } else {
 
     // Viewing transformation - set the viewpoint back from the objects in the scene
@@ -357,12 +368,11 @@ void MyGLCanvas::draw_view_window(void)
 
   }
 
-// Apply the modelling transformation
+  // Apply the modelling transformation
   glTranslatef(scene_pan[0], scene_pan[1], 0.0);
   glMultMatrixf(scene_rotate);
   glScalef(scene_scale, scene_scale, scene_scale);
   glTranslatef(-VOLUME_WIDTH/2.0, -VOLUME_HEIGHT/2.0, -VOLUME_DEPTH/2.0);
- 
 
   // The ordering of what follows matters in the context of alpha blending
 
@@ -375,7 +385,7 @@ void MyGLCanvas::draw_view_window(void)
     coords[6] = VOLUME_WIDTH; coords[7] = VOLUME_HEIGHT; coords[8] = frame->data_slice_number * SLICE_SEPARATION;
     coords[9] = 0.0; coords[10] = VOLUME_HEIGHT; coords[11] = frame->data_slice_number * SLICE_SEPARATION;
     draw_reslice_in_view(frame->data_texture_valid, frame->data_texture, VOLUME_WIDTH, VOLUME_HEIGHT, frame->data_tex_width, frame->data_tex_height, colour, coords);
-    
+
     // Draw the x-z reslice
     colour[0] = 1.0; colour[1] = 0.0; colour[2] = 0.0;
     coords[0] = 0.0; coords[1] = frame->y_reslice_position; coords[2] = 0.0;
@@ -383,7 +393,7 @@ void MyGLCanvas::draw_view_window(void)
     coords[6] = VOLUME_WIDTH; coords[7] = frame->y_reslice_position; coords[8] = VOLUME_DEPTH;
     coords[9] = 0.0; coords[10] = frame->y_reslice_position; coords[11] = VOLUME_DEPTH;
     draw_reslice_in_view(frame->xz_texture_valid, frame->xz_texture, VOLUME_WIDTH, VOLUME_DEPTH, frame->xz_tex_width, frame->xz_tex_height, colour, coords);
-    
+
     // Draw the y-z reslice
     colour[0] = 0.0; colour[1] = 1.0; colour[2] = 0.0;
     coords[0] = frame->x_reslice_position; coords[1] = 0.0; coords[2] = 0.0;
@@ -392,34 +402,6 @@ void MyGLCanvas::draw_view_window(void)
     coords[9] = frame->x_reslice_position; coords[10] = 0; coords[11] = VOLUME_DEPTH;
     draw_reslice_in_view(frame->yz_texture_valid, frame->yz_texture, VOLUME_HEIGHT, VOLUME_DEPTH, frame->yz_tex_width, frame->yz_tex_height, colour, coords);
 
-    // Draw the any reslice (in purple)
-    // See construct_any_reslice_nearest_neighbour first
-    // there are 4 coords of the polygon, defined in space by 1. x,y,z(g_min, i_min), 2. x,y,z(g_min, i_max), 3. x,y,z(g_max, i_min), 4. x,y,z(g_max, i_max)
-    // x values for each coord
-    double x_1 = cos(frame->phi)*cos(frame->psi)*(-MAX_TRAVERSAL) + (cos(frame->phi)*sin(frame->psi)*cos(frame->theta) + sin(frame->phi)*sin(frame->theta))*(-MAX_TRAVERSAL) + frame->x_reslice_position;
-    double x_2 = cos(frame->phi)*cos(frame->psi)*(-MAX_TRAVERSAL) + (cos(frame->phi)*sin(frame->psi)*cos(frame->theta) + sin(frame->phi)*sin(frame->theta))*(MAX_TRAVERSAL) + frame->x_reslice_position;
-    double x_3 = cos(frame->phi)*cos(frame->psi)*(MAX_TRAVERSAL) + (cos(frame->phi)*sin(frame->psi)*cos(frame->theta) + sin(frame->phi)*sin(frame->theta))*(MAX_TRAVERSAL) + frame->x_reslice_position;
-    double x_4 = cos(frame->phi)*cos(frame->psi)*(MAX_TRAVERSAL) + (cos(frame->phi)*sin(frame->psi)*cos(frame->theta) + sin(frame->phi)*sin(frame->theta))*(-MAX_TRAVERSAL) + frame->x_reslice_position;
-    // y values for each coord
-    double y_1 = sin(frame->phi)*cos(frame->psi)*(-MAX_TRAVERSAL) + (sin(frame->phi)*sin(frame->psi)*cos(frame->theta) - cos(frame->phi)*sin(frame->theta))*(-MAX_TRAVERSAL) + frame->y_reslice_position;
-    double y_2 = sin(frame->phi)*cos(frame->psi)*(-MAX_TRAVERSAL) + (sin(frame->phi)*sin(frame->psi)*cos(frame->theta) - cos(frame->phi)*sin(frame->theta))*(MAX_TRAVERSAL) + frame->y_reslice_position;
-    double y_3 = sin(frame->phi)*cos(frame->psi)*(MAX_TRAVERSAL) + (sin(frame->phi)*sin(frame->psi)*cos(frame->theta) - cos(frame->phi)*sin(frame->theta))*(MAX_TRAVERSAL) + frame->y_reslice_position;
-    double y_4 = sin(frame->phi)*cos(frame->psi)*(MAX_TRAVERSAL) + (sin(frame->phi)*sin(frame->psi)*cos(frame->theta) - cos(frame->phi)*sin(frame->theta))*(-MAX_TRAVERSAL) + frame->y_reslice_position;
-    // z values for each coord
-    double z_1 = -sin(frame->psi)*(-MAX_TRAVERSAL) + cos(frame->theta)*cos(frame->psi)*(-MAX_TRAVERSAL) + frame->data_slice_number;
-    double z_2 = -sin(frame->psi)*(-MAX_TRAVERSAL) + cos(frame->theta)*cos(frame->psi)*(MAX_TRAVERSAL) + frame->data_slice_number;
-    double z_3 = -sin(frame->psi)*(MAX_TRAVERSAL) + cos(frame->theta)*cos(frame->psi)*(MAX_TRAVERSAL) + frame->data_slice_number;
-    double z_4 = -sin(frame->psi)*(MAX_TRAVERSAL) + cos(frame->theta)*cos(frame->psi)*(-MAX_TRAVERSAL) + frame->data_slice_number;
-
-    colour[0] = 0.5; colour[1] = 0; colour[2] = 0.7;
-    coords[0] = x_1; coords[1] = y_1; coords[2] = z_1;
-    coords[3] = x_2; coords[4] = y_2; coords[5] = z_2;
-    coords[6] = x_3; coords[7] = y_3; coords[8] = z_3;
-    coords[9] = x_4; coords[10] = y_4; coords[11] = z_4;
-    // draw the pixels within the slice
-    draw_reslice_in_view(frame->any_texture_valid, frame->any_texture, 2*MAX_TRAVERSAL, 2*MAX_TRAVERSAL, frame->any_tex_width, frame->any_tex_height, colour, coords);
-
-    
   }
 
   // Draw the surface
@@ -451,7 +433,7 @@ BEGIN_EVENT_TABLE(MyFrame, wxFrame)
   EVT_BUTTON(ISO_BUTTON_ID, MyFrame::OnCalcIso)
   EVT_CLOSE(MyFrame::OnClose)
 END_EVENT_TABLE()
-  
+
 MyFrame::MyFrame(wxWindow *parent, const wxString& title, wxString filename, const wxPoint& pos, const wxSize& size, long style):
   wxFrame(parent, wxID_ANY, title, pos, size, style)
   // Constructor - loads the data, lays out the canvases and controls using sizers
@@ -776,7 +758,7 @@ void MyFrame::OnCalcIso(wxCommandEvent &event)
 {
   tl_canvas->SetCurrent(*tl_canvas->context);
   tris = isosurf(VOLUME_WIDTH, VOLUME_HEIGHT, NUM_SLICES, (float)surface_resolution, SLICE_SEPARATION, data, threshold, tri_list, n_tris);
-  SetStatusText(wxString::Format("Surface comprises %d triangles, area %f square cm, volume %f ml", 
+  SetStatusText(wxString::Format("Surface comprises %d triangles, area %f square cm, volume %f ml",
 				 n_tris, mesh_area()*PIXEL_DIMENSION*PIXEL_DIMENSION*10000, mesh_volume()*PIXEL_DIMENSION*PIXEL_DIMENSION*PIXEL_DIMENSION*1000000));
   tl_canvas->Refresh();
 }
@@ -832,7 +814,7 @@ bool MyFrame::generate_texture(int image_width, int image_height, int &tex_width
 	*out++=0;
       }
     }
-  
+
   // Bind the texture to the OpenGL drawing context
   tl_canvas->SetCurrent(*tl_canvas->context);
   glBindTexture(GL_TEXTURE_2D, texture);
@@ -903,74 +885,78 @@ void MyFrame::construct_any_reslice(void)
 }
 
 void MyFrame::construct_any_reslice_nearest_neighbour(void)
-// 
-// This function currently constructs an any angle reslice, using nearest neighbour interpolation.
+//
+// This function currently constructs an arbitrary reslice, using nearest neighbour interpolation.
 // according to the current x_reslice_position, y_reslice_position, and angles theta, phi and psi.
 {
-  int g, i, data_index, reslice_index, nearest_slice, x_vol, y_vol;
-  double x, y, z;
-  bool x_valid, y_valid, z_valid;
+  // position in any_rgb reslice array
+  int reslice_index = 0;
 
-  reslice_index = 0;
-  // Plane orientations (+ve is anticlockwise)
+  // position in volume data array
+  int data_index;
+
+  // nearest neighbour data slice
+  int nearest_slice;
+
+  /// position in data volume
+  int x_vol;
+  int y_vol;
+
+  /// real position in space
+  double x, y, z;
 
   /// initialise reslice quarter plane counters at 0
-  g = i = 0;
-  
-  /// region validty
-  x_valid = false;
-  y_valid = false;
-  z_valid = false;
+  int g = 0;
+  int i = 0;
 
-  // initialise reslice index at 0
+  // coord transformations
+  // calculated once as constant in function call
+  double xg_transform = cos(phi)*cos(psi);
+  double xi_transform = (cos(phi)*sin(psi)*cos(theta) + sin(phi)*sin(theta));
+  double yg_transform = sin(phi)*cos(psi);
+  double yi_transform = (sin(phi)*sin(psi)*cos(theta) - cos(phi)*sin(theta));
+  double zg_transform = -sin(psi);
+  doubel zi_transform = cos(theta)*cos(psi);
 
-  reslice_index = 0;
+  /// validty of position (is position in data volume?)
+  bool x_valid = false;
+  bool y_valid = false;
+  bool z_valid = false;
 
-  // g reslice advancement loop
+  // advance in planar g direction
   for (g= -MAX_TRAVERSAL ; g<MAX_TRAVERSAL; g++) {
 
-    // i reslice advancement loop
+    // advance in planar g direction
     for (i=-MAX_TRAVERSAL; i<MAX_TRAVERSAL; i++) {
+
       /// coord system transformations
       // x position
-      x = cos(phi)*cos(psi)*g + (cos(phi)*sin(psi)*cos(theta) + sin(phi)*sin(theta))*i + x_reslice_position;
+      x = xg_transform*g + xi_transform*i + x_reslice_position;
       // y position
-      y = sin(phi)*cos(psi)*g + (sin(phi)*sin(psi)*cos(theta) - cos(phi)*sin(theta))*i + y_reslice_position;
+      y = yg_transform*g + yi_transform*i + y_reslice_position;
       // z position
-      z = -sin(psi)*g + cos(theta)*cos(psi)*i + data_slice_number;
+      z = zg_transform*g + zi_transform*i + data_slice_number*SLICE_SEPARATION;
+
       // determine if current world coordinates are currently within volume
       // in x domain
-      if (x > VOLUME_WIDTH || x < 0) {
-        x_valid = false;
-      }
-      else{
-        x_valid = true;
-      }
+      x_valid != (x > VOLUME_WIDTH || x < 0);
       //in y domain
-      if (y > VOLUME_HEIGHT || y < 0) {
-        y_valid = false;
-      }
-      else{
-        y_valid = true;
-      }
+      y_valid != (y > VOLUME_HEIGHT || y < 0);
       //in z domain
-      if (z > VOLUME_DEPTH || z < 0){
-       z_valid = false;
-      }
-      else{
-       z_valid = true;
-      }
+      z_valid = (z > VOLUME_DEPTH || z < 0);
 
       /// now determine points to transfer to reslice
       if (x_valid && z_valid && y_valid) {
         //valid volume coords so pass volume data to reslice
         x_vol = round(x);
         y_vol = round(y);
+
         // nearest neighbour interpolation
         nearest_slice = round(z/SLICE_SEPARATION);
 
+        // calculate position in data array
         data_index = nearest_slice*VOLUME_WIDTH*VOLUME_HEIGHT + y_vol*VOLUME_WIDTH + x_vol;
-        
+
         // colour transform
         any_rgb[reslice_index++] = MapItoR[data[data_index]];
         any_rgb[reslice_index++] = MapItoG[data[data_index]];
@@ -985,8 +971,6 @@ void MyFrame::construct_any_reslice_nearest_neighbour(void)
       }
     }
   }
-  // clip edges by removing empty regions will throw up problems with drawing the polygon
-  
 }
 
 void MyFrame::construct_yz_reslice_nearest_neighbour(void)
@@ -1035,7 +1019,7 @@ void MyFrame::construct_xz_reslice_nearest_neighbour(void)
 double MyFrame::mesh_volume(void)
 // EXERCISE 2
 // Write a function to calculate the volume enclosed by the isosurface.
-// The function should return the volume, instead of the default value (zero) 
+// The function should return the volume, instead of the default value (zero)
 // that it currently returns. The units should be cubic pixels.
 {
   return 0.0;
@@ -1063,7 +1047,7 @@ double MyFrame::mesh_area(void)
     // Area is 1/2 | ab x ac |
     area += sqrt(x*x + y*y + z*z)/2.0;
   }
-  
+
   return area;
 }
 
