@@ -1,0 +1,26 @@
+3G4 Lab Fri 25th January 2019
+
+Familiarisation with the visualisation software
+
+Deducing the age of the patient:
+
+Observations
+1. Patient only has baby teeth
+2. They have lost their 2 lower center incisors
+
+Conclusions
+1. Definately below the age of 9.
+2. 2 lower center incisors are usually the first to go around age 5-7 so the patient is around this age. Probably about 6.
+
+Reslicing
+
+Visual differences:
+w nearest neighbour it is pixely
+with linear interpolation it gives a smoother image but rows and columns of pixels can still be roughly made out
+with a higher order interpolater it is smoother still
+
+
+
+
+
+

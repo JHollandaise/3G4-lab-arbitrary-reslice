@@ -1,0 +1,2 @@
+#!/bin/bash
+LD_PRELOAD=/users/f/ahg/ugrad/3G4_data/libGL.so.1 ./vis $1
