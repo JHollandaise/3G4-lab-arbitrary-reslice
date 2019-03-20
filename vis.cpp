@@ -402,6 +402,32 @@ void MyGLCanvas::draw_view_window(void)
     coords[9] = frame->x_reslice_position; coords[10] = 0; coords[11] = VOLUME_DEPTH;
     draw_reslice_in_view(frame->yz_texture_valid, frame->yz_texture, VOLUME_HEIGHT, VOLUME_DEPTH, frame->yz_tex_width, frame->yz_tex_height, colour, coords);
 
+    // Draw the any reslice (in purple)
+    // See construct_any_reslice_nearest_neighbour first
+    // there are 4 coords of the polygon, defined in space by 1. x,y,z(g_min, i_min), 2. x,y,z(g_min, i_max), 3. x,y,z(g_max, i_min), 4. x,y,z(g_max, i_max)
+    // x values for each coord
+    double x_1 = cos(frame->phi)*cos(frame->psi)*(-MAX_TRAVERSAL) + (cos(frame->phi)*sin(frame->psi)*cos(frame->theta) + sin(frame->phi)*sin(frame->theta))*(-MAX_TRAVERSAL) + frame->x_reslice_position;
+    double x_2 = cos(frame->phi)*cos(frame->psi)*(-MAX_TRAVERSAL) + (cos(frame->phi)*sin(frame->psi)*cos(frame->theta) + sin(frame->phi)*sin(frame->theta))*(MAX_TRAVERSAL) + frame->x_reslice_position;
+    double x_3 = cos(frame->phi)*cos(frame->psi)*(MAX_TRAVERSAL) + (cos(frame->phi)*sin(frame->psi)*cos(frame->theta) + sin(frame->phi)*sin(frame->theta))*(MAX_TRAVERSAL) + frame->x_reslice_position;
+    double x_4 = cos(frame->phi)*cos(frame->psi)*(MAX_TRAVERSAL) + (cos(frame->phi)*sin(frame->psi)*cos(frame->theta) + sin(frame->phi)*sin(frame->theta))*(-MAX_TRAVERSAL) + frame->x_reslice_position;
+    // y values for each coord
+    double y_1 = sin(frame->phi)*cos(frame->psi)*(-MAX_TRAVERSAL) + (sin(frame->phi)*sin(frame->psi)*cos(frame->theta) - cos(frame->phi)*sin(frame->theta))*(-MAX_TRAVERSAL) + frame->y_reslice_position;
+    double y_2 = sin(frame->phi)*cos(frame->psi)*(-MAX_TRAVERSAL) + (sin(frame->phi)*sin(frame->psi)*cos(frame->theta) - cos(frame->phi)*sin(frame->theta))*(MAX_TRAVERSAL) + frame->y_reslice_position;
+    double y_3 = sin(frame->phi)*cos(frame->psi)*(MAX_TRAVERSAL) + (sin(frame->phi)*sin(frame->psi)*cos(frame->theta) - cos(frame->phi)*sin(frame->theta))*(MAX_TRAVERSAL) + frame->y_reslice_position;
+    double y_4 = sin(frame->phi)*cos(frame->psi)*(MAX_TRAVERSAL) + (sin(frame->phi)*sin(frame->psi)*cos(frame->theta) - cos(frame->phi)*sin(frame->theta))*(-MAX_TRAVERSAL) + frame->y_reslice_position;
+    // z values for each coord
+    double z_1 = -sin(frame->psi)*(-MAX_TRAVERSAL) + cos(frame->theta)*cos(frame->psi)*(-MAX_TRAVERSAL) + frame->data_slice_number;
+    double z_2 = -sin(frame->psi)*(-MAX_TRAVERSAL) + cos(frame->theta)*cos(frame->psi)*(MAX_TRAVERSAL) + frame->data_slice_number;
+    double z_3 = -sin(frame->psi)*(MAX_TRAVERSAL) + cos(frame->theta)*cos(frame->psi)*(MAX_TRAVERSAL) + frame->data_slice_number;
+    double z_4 = -sin(frame->psi)*(MAX_TRAVERSAL) + cos(frame->theta)*cos(frame->psi)*(-MAX_TRAVERSAL) + frame->data_slice_number;
+
+    colour[0] = 0.5; colour[1] = 0; colour[2] = 0.7;
+    coords[0] = x_1; coords[1] = y_1; coords[2] = z_1;
+    coords[3] = x_2; coords[4] = y_2; coords[5] = z_2;
+    coords[6] = x_3; coords[7] = y_3; coords[8] = z_3;
+    coords[9] = x_4; coords[10] = y_4; coords[11] = z_4;
+    // draw the pixels within the slice
+    draw_reslice_in_view(frame->any_texture_valid, frame->any_texture, 2*MAX_TRAVERSAL, 2*MAX_TRAVERSAL, frame->any_tex_width, frame->any_tex_height, colour, coords);
   }
 
   // Draw the surface
@@ -916,7 +942,7 @@ void MyFrame::construct_any_reslice_nearest_neighbour(void)
   double yg_transform = sin(phi)*cos(psi);
   double yi_transform = (sin(phi)*sin(psi)*cos(theta) - cos(phi)*sin(theta));
   double zg_transform = -sin(psi);
-  doubel zi_transform = cos(theta)*cos(psi);
+  double zi_transform = cos(theta)*cos(psi);
 
   /// validty of position (is position in data volume?)
   bool x_valid = false;
@@ -935,15 +961,30 @@ void MyFrame::construct_any_reslice_nearest_neighbour(void)
       // y position
       y = yg_transform*g + yi_transform*i + y_reslice_position;
       // z position
-      z = zg_transform*g + zi_transform*i + data_slice_number*SLICE_SEPARATION;
+      z = zg_transform*g + zi_transform*i + data_slice_number;
 
       // determine if current world coordinates are currently within volume
-      // in x domain
-      x_valid != (x > VOLUME_WIDTH || x < 0);
+      //in x domain
+      if (x > VOLUME_WIDTH || x < 0) {
+        x_valid = false;
+      }
+      else{
+        x_valid = true;
+      }
       //in y domain
-      y_valid != (y > VOLUME_HEIGHT || y < 0);
+      if (y > VOLUME_HEIGHT || y < 0) {
+        y_valid = false;
+      }
+      else{
+        y_valid = true;
+      }
       //in z domain
-      z_valid = (z > VOLUME_DEPTH || z < 0);
+      if (z > VOLUME_DEPTH || z < 0){
+       z_valid = false;
+      }
+      else{
+       z_valid = true;
+      }
 
       /// now determine points to transfer to reslice
       if (x_valid && z_valid && y_valid) {
