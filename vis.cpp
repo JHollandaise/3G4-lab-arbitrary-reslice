@@ -936,7 +936,7 @@ void MyFrame::construct_any_reslice_nearest_neighbour(void)
       x = cos(phi)*cos(psi)*g + (cos(phi)*sin(psi)*cos(theta) + sin(phi)*sin(theta))*i + x_reslice_position;
       // y position
       y = sin(phi)*cos(psi)*g + (sin(phi)*sin(psi)*cos(theta) - cos(phi)*sin(theta))*i + y_reslice_position;
-      // z position BUG here that doesn't calculate z position correctly
+      // z position
       z = -sin(psi)*g + cos(theta)*cos(psi)*i + data_slice_number;
       // determine if current world coordinates are currently within volume
       // in x domain
